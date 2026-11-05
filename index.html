@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NÍTIDO · sonido & producción</title>
+<meta name="description" content="Alquiler de sonido, luces, DJs y producción técnica de eventos en Uruguay.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --negro:#0b0b0b;
+  --papel:#f1efe6;
+  --lima:#c4f000;
+  --verde:#9cc41a;
+  --naranja:#ff5a1a;
+  --azul:#2457ff;
+  --rojo:#ff3d27;
+  --u:1px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--negro);color:var(--papel);
+  font-family:Montserrat,system-ui,sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--lima);outline-offset:3px}
+
+/* fondo papel negro */
+#bg{position:fixed;inset:0;background:#0b0b0b url(assets/fondo_papel_negro.webp) center/cover}
+#grain{position:fixed;inset:-50%;pointer-events:none;z-index:60;opacity:.16;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* escenario */
+#stage{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);transition:filter .6s}
+body.focusing #stage{filter:blur(5px) brightness(.45)}
+.el{position:absolute;display:block;transform-origin:50% 50%}
+.el img,.el svg{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none}
+.el.gear{cursor:pointer;filter:drop-shadow(0 calc(var(--u)*10) calc(var(--u)*14) rgba(0,0,0,.6))}
+.el.gear::after{content:"";position:absolute;inset:-4%;}
+.el.gear img{transition:transform .25s ease-out,filter .25s ease-out}
+.el.gear:hover img,.el.gear.is-hover img{transform:scale(1.05) rotate(-1deg);filter:brightness(1.12) contrast(1.05)}
+.el.dj img{filter:grayscale(1) contrast(1.18) brightness(1.04)}
+.el.dj:hover img,.el.dj.is-hover img{filter:grayscale(1) contrast(1.25) brightness(1.15)}
+.el.cutline img{filter:drop-shadow(0 0 0 #fff) drop-shadow(1.5px 0 0 #f1efe6) drop-shadow(-1.5px 0 0 #f1efe6) drop-shadow(0 1.5px 0 #f1efe6) drop-shadow(0 -1.5px 0 #f1efe6) grayscale(1) contrast(1.18)}
+.el.deco{pointer-events:none}
+.torn svg{width:100%;height:100%}
+.halftone{background-image:radial-gradient(circle,#d9d9d9 30%,transparent 32%);background-size:calc(var(--u)*7) calc(var(--u)*7);
+  -webkit-mask-image:radial-gradient(ellipse at center,#000 20%,transparent 70%);mask-image:radial-gradient(ellipse at center,#000 20%,transparent 70%);opacity:.55}
+.draw path{stroke-dasharray:var(--len);stroke-dashoffset:0}
+
+/* logo + servicios */
+#logo{pointer-events:none}
+#services{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:calc(var(--u)*6);align-items:center;white-space:nowrap;z-index:30}
+#services button{font-weight:500;letter-spacing:.2em;font-size:calc(var(--u)*15.5);padding:calc(var(--u)*6) calc(var(--u)*8);position:relative;text-transform:uppercase}
+#services button::after{content:"";position:absolute;left:calc(var(--u)*8);right:calc(var(--u)*8);bottom:calc(var(--u)*1);height:calc(var(--u)*3);background:var(--lima);transform:scaleX(0);transform-origin:left;transition:transform .2s ease-out}
+#services button:hover::after,#services button[aria-expanded=true]::after{transform:scaleX(1)}
+#services button[aria-expanded=true]{color:var(--lima)}
+#services .dot{color:var(--lima);font-size:calc(var(--u)*14)}
+#services .ch{display:inline-block}
+#note{position:absolute;left:50%;z-index:31;width:calc(var(--u)*430);transform:translateX(-50%) rotate(-1.4deg);color:#111;pointer-events:none;opacity:0}
+#note .paper{position:absolute;inset:0;z-index:-1}
+#note .in{padding:calc(var(--u)*22) calc(var(--u)*28) calc(var(--u)*24)}
+#note h3{font-family:"Space Mono",monospace;font-size:calc(var(--u)*12);letter-spacing:.14em;text-transform:uppercase;margin-bottom:calc(var(--u)*8);color:#111}
+#note h3 span{background:#111;color:var(--lima);padding:0 .4em}
+#note p{font-size:calc(var(--u)*15);line-height:1.42;font-weight:500}
+
+/* etiqueta tipo Dymo */
+#tag{position:fixed;left:0;top:0;z-index:70;pointer-events:none;opacity:0;transform-origin:0 50%}
+#tag .t{background:var(--lima);color:#0b0b0b;font-family:"Space Mono",monospace;padding:7px 12px 6px;
+  box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 -2px 0 rgba(0,0,0,.18);clip-path:polygon(0 4%,100% 0,99% 96%,1% 100%)}
+#tag b{display:block;font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,255,255,.35)}
+#tag small{display:block;font-size:11.5px;letter-spacing:.03em;opacity:.8}
+#tag i{font-style:normal;display:inline-block;margin-top:3px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;border-top:1px solid rgba(0,0,0,.35);padding-top:2px}
+
+/* barra superior */
+#top{position:fixed;left:18px;top:14px;z-index:40;display:flex;gap:14px;font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+#top a,#top button{padding:6px 10px;background:rgba(11,11,11,.72);border:1px solid rgba(241,239,230,.25)}
+#top a:hover,#top button:hover{border-color:var(--lima);color:var(--lima)}
+#hint{position:fixed;left:50%;bottom:50px;transform:translateX(-50%);z-index:40;font-family:"Space Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(241,239,230,.75);display:flex;align-items:center;gap:10px;pointer-events:none;white-space:nowrap}
+#hint .arr{display:inline-block;color:var(--lima);animation:nudge 1.6s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+body.focusing #hint{opacity:0}
+body.focusing #top{opacity:0;pointer-events:none}
+
+/* crossfader de progreso */
+#fader{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:55;width:min(300px,64vw);height:26px}
+#fader .track{position:absolute;left:0;right:0;top:11px;height:4px;background:#1c1c1c;border:1px solid #4a4a4a;border-radius:2px}
+#fader .ticks{position:absolute;inset:0}
+#fader .tick{position:absolute;top:0;bottom:0;width:18px;margin-left:-9px}
+#fader .tick::before{content:"";position:absolute;left:8px;width:1px;top:0;height:6px;background:#777}
+#fader .tick::after{content:"";position:absolute;left:8px;width:1px;bottom:0;height:6px;background:#777}
+#fader .tick:hover::before,#fader .tick:hover::after{background:var(--lima)}
+#fader .cap{position:absolute;top:1px;width:16px;height:24px;margin-left:-8px;background:linear-gradient(90deg,#3a3a3a,#161616);border:1px solid #777;border-radius:2px;pointer-events:none;transition:left .7s cubic-bezier(.65,0,.35,1)}
+#fader .cap::after{content:"";position:absolute;top:3px;bottom:3px;left:6px;width:2px;background:var(--lima)}
+#fader .lbl{position:absolute;bottom:30px;transform:translateX(-50%);white-space:nowrap;font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--lima);transition:left .7s cubic-bezier(.65,0,.35,1),opacity .3s;pointer-events:none;opacity:0}
+body.focusing #fader .lbl{opacity:1}
+
+/* modo foco */
+#focus{position:fixed;inset:0;z-index:50;pointer-events:none;visibility:hidden}
+body.focusing #focus{visibility:visible;pointer-events:auto}
+#focus .shade{position:absolute;inset:0;background:rgba(8,8,8,.72);opacity:0}
+#ghost{position:absolute;right:-2vw;bottom:-6vh;font-weight:900;font-size:min(42vw,62vh);line-height:.8;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.5px rgba(196,240,0,.22);white-space:nowrap;pointer-events:none;opacity:0}
+.clone{position:fixed;z-index:52;transform-origin:50% 50%;pointer-events:none;filter:drop-shadow(0 30px 40px rgba(0,0,0,.7))}
+.clone.dj{filter:grayscale(1) contrast(1.18) drop-shadow(0 30px 40px rgba(0,0,0,.7))}
+.fpaper{position:fixed;z-index:51;pointer-events:none}
+#info{position:absolute;z-index:53;left:56vw;top:50%;transform:translateY(-50%);width:min(38vw,560px)}
+#info .kick{font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--lima);margin-bottom:14px}
+#info h2{font-weight:900;font-size:clamp(34px,4.6vw,76px);line-height:.92;letter-spacing:-.025em;text-transform:uppercase;margin-bottom:8px}
+#info h2 .ch{display:inline-block}
+#info .sub{font-weight:600;font-size:clamp(15px,1.25vw,20px);color:rgba(241,239,230,.8);margin-bottom:18px}
+#info ul{list-style:none;font-family:"Space Mono",monospace;font-size:clamp(13px,1vw,15px);line-height:1.5;border-top:1px solid rgba(241,239,230,.25);margin-bottom:18px}
+#info li{padding:7px 0;border-bottom:1px solid rgba(241,239,230,.14);display:flex;gap:12px}
+#info li::before{content:"→";color:var(--lima)}
+#info .line{font-weight:800;font-size:clamp(18px,1.6vw,26px);color:var(--lima);line-height:1.2}
+#info .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
+#info .cta a{font-family:"Space Mono",monospace;font-size:13px;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;padding:10px 14px;border:1px solid var(--lima);color:var(--lima);transition:background .2s,color .2s}
+#info .cta a:hover{background:var(--lima);color:#0b0b0b}
+#info .cta a.solid{background:var(--lima);color:#0b0b0b}
+#info .frag{margin-top:26px;font-family:"Space Mono",monospace;font-size:12.5px;color:rgba(241,239,230,.6);font-style:italic}
+#info.final{left:50%;transform:translate(-50%,-50%);width:min(860px,88vw);text-align:left}
+#info.final h2{font-size:clamp(40px,6.4vw,104px)}
+#close{position:absolute;right:66px;top:14px;z-index:54;font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border:1px solid rgba(241,239,230,.3);background:rgba(11,11,11,.6)}
+#close:hover{border-color:var(--lima);color:var(--lima)}
+
+@media (max-aspect-ratio:4/5){
+  #info{left:7vw;right:7vw;width:auto;top:auto;bottom:6vh;transform:none}
+  #info h2{font-size:clamp(30px,9vw,54px)}
+  #info ul{font-size:12.5px}
+  #info li{padding:5px 0}
+  #info.final{left:7vw;top:50%;bottom:auto;transform:translateY(-50%);width:auto}
+  #fader{bottom:12px}
+  #info{bottom:9vh}
+  #top{left:10px;top:10px;gap:8px;font-size:11px}
+  #close{right:44px;top:10px}
+  #note{width:calc(var(--u)*760)}
+  #note p{font-size:calc(var(--u)*26)}
+  #note h3{font-size:calc(var(--u)*20)}
+  #services{flex-wrap:wrap;justify-content:center;white-space:normal;width:94%;row-gap:0}
+  #services button{font-size:calc(var(--u)*27)}
+  #services .dot{font-size:calc(var(--u)*24)}
+}
+@media (prefers-reduced-motion:reduce){
+  #hint .arr{animation:none}
+  #fader .cap,#fader .lbl{transition:none}
+}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="stage" aria-label="Collage de NÍTIDO: equipos y DJs"></div>
+
+<nav id="top" aria-label="Contacto rápido">
+  <button type="button" data-goto="last">Contacto</button>
+  <a href="https://www.instagram.com/nitido.sonido/" target="_blank" rel="noopener">@nitido.sonido</a>
+</nav>
+<div id="hint"><span class="arr">↓</span> Bajá para ver los equipos de cerca</div>
+<div id="fader" aria-label="Recorrido"><div class="track"></div><div class="ticks"></div><div class="cap"></div><div class="lbl"></div></div>
+<div id="tag" role="tooltip"><div class="t"><b></b><small></small><i></i></div></div>
+
+<section id="focus" aria-live="polite">
+  <div class="shade"></div>
+  <div id="ghost"></div>
+  <div id="info"></div>
+  <button id="close" type="button">Volver al collage ✕</button>
+</section>
+<div id="grain"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+(function(){
+"use strict";
+const A = 'assets/';
+const RM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const G = window.gsap && !RM ? window.gsap : null;
+
+/* ---------- contenido ---------- */
+const JP = {name:'Juan Pablo', tel:'59899709934', show:'+598 99 709 934'};
+const FE = {name:'Fede', tel:'59898753539', show:'+598 98 753 539'};
+const wa = p => `https://wa.me/${p.tel}?text=${encodeURIComponent('Hola NÍTIDO! Quiero consultar por un evento.')}`;
+
+const SERVICES = {
+  alquiler:{t:'Alquiler', p:'Parlantes activos, subwoofer, consolas, mixers, bandejas y controladoras. Equipos mantenidos, probados y listos para salir.'},
+  sonido:{t:'Sonido', p:'Armamos el sistema según el lugar y la gente: de un set íntimo a eventos de 200 personas. ¿Más grande? Consultanos.'},
+  luces:{t:'Luces', p:'Luces LED para que el lugar se vea como suena. Elegimos el kit según el espacio y el momento de la noche.'},
+  djs:{t:"DJ's", p:'Bookings de DJs: Ambient, Electrónica, Funk, Jazz, Hip Hop y Soul. Consultanos por otras propuestas musicales.'},
+  produccion:{t:'Producción', p:'Producción técnica de eventos, desde sets íntimos hasta festivales. Soluciones a medida y asesoramiento técnico y artístico.'}
+};
+
+/* posiciones: d = escritorio [x%, y%, ancho%, rot], m = celular. Para papeles: [x,y,w,h,rot] */
+const ITEMS = [
+  // papeles rotos y fondos
+  {id:'pOrTL', type:'torn', color:'#ff5a1a', seed:3, d:[-3,-4,16,25,-6], m:[-6,-2,32,13,-6]},
+  {id:'pOrDj', type:'torn', color:'#ff5a1a', seed:7, d:[1.5,27,19,41,4], m:[-2,27,42,25,3]},
+  {id:'pWLap', type:'torn', color:'#ecebe4', seed:11, d:[32,3.5,19.5,27,-3], m:[21,3,38,19,-3]},
+  {id:'pWMix', type:'torn', color:'#dedcd3', seed:13, d:[61.5,4,15.5,33,4], m:[55,1,25,16,4]},
+  {id:'pBlDj', type:'torn', color:'#2457ff', seed:19, d:[84.5,33,17,40,-5], m:[58,27,46,24,-4]},
+  {id:'pLiBR', type:'torn', color:'#c4f000', seed:23, d:[73,77,30,22,-3], m:[52,88,52,13,-3]},
+  {id:'pWBot', type:'torn', color:'#e8e6dd', seed:29, d:[42,62,10,11,6], m:null},
+  {id:'ht1', type:'half', d:[0,62,15,24,0], m:[0,60,30,14,0]},
+  {id:'ht2', type:'half', d:[56,86,14,14,0], m:null},
+  {id:'ht3', type:'half', d:[90,40,10,20,0], m:[80,52,20,10,0]},
+  {id:'orb1', type:'svg', src:'orbita_lima.svg', d:[16,6,68,0,-4], m:[-6,12,112,0,-8], draw:1},
+  {id:'orb2', type:'svg', src:'orbita_lima.svg', d:[26,48,58,0,172], m:[0,62,100,0,170], draw:1},
+
+  // equipos
+  {id:'parlL', type:'gear', src:'parlante_db_angulo.webp', d:[20,3,12,-3], m:[1,2,21,-3], tag:['dB Technologies B-Hype 15','Parlante activo 15" · 280 W RMS'], step:'parlantes'},
+  {id:'lap', type:'gear', src:'control_ui12_dispositivos.webp', d:[33.5,5.5,16.5,-1], m:[23,4,33,-1], tag:['Soundcraft Ui12','La mezcla en tu tablet, celu o compu'], step:'consola'},
+  {id:'ui12', type:'gear', src:'consola_digital_ui12.webp', d:[48.5,11,12.5,3], m:[52,14.5,27,3], tag:['Soundcraft Ui12','Consola digital WiFi · 12 entradas'], step:'consola'},
+  {id:'mix', type:'gear', src:'mixer_pioneer_djm350.webp', d:[63.5,6.5,11.5,3], m:[58,1.5,19,3], tag:['Pioneer DJM-350','Mixer DJ · 2 canales'], step:'mixer'},
+  {id:'parlR', type:'gear', src:'parlante_db_frontal.webp', d:[76.5,8,9.8,3], m:[80,4,18,3], tag:['dB Technologies B-Hype 15','Parlante activo 15" · tenemos 2'], step:'parlantes'},
+  {id:'tri1', type:'svgGear', src:'soporte_tripode.svg', d:[66.5,41,7.5,-4], m:null, tag:['Pies para las cajas','Para levantar el sonido por encima de la gente']},
+  {id:'tri2', type:'svgGear', src:'soporte_tripode.svg', d:[71.5,37,7.5,3], m:null, tag:['Pies para las cajas','Para levantar el sonido por encima de la gente']},
+  {id:'djL', type:'dj', src:'dj_samma.webp', d:[0.5,26,27,0], m:[-5,27,58,0], tag:['DJ Samma','Federico Massarino · socio fundador'], step:'samma'},
+  {id:'djR', type:'dj', src:'dj_derecho_recorte_aproximado.webp', d:[76.5,31,24,0], m:[47,24,54,0], tag:['DJ Juan Pablo Halty','Socio fundador'], step:'jp'},
+  {id:'sub', type:'gear', src:'subwoofer_lexsen.webp', d:[25,57,12,-2], m:[3,75,31,-2], tag:['Subwoofer Lexsen WSB118','18" · 1000 W RMS'], step:'sub'},
+  {id:'tt1', type:'gear', src:'bandeja_vinilo_01.webp', d:[37,58.5,13.5,-4], m:[34,73.5,31,-4], tag:['Technics SL-1210 MK2','Bandeja de vinilo · tenemos 2'], step:'bandejas'},
+  {id:'tt2', type:'gear', src:'bandeja_vinilo_02.webp', d:[50.5,57.5,14,3], m:[66,73,32,3], tag:['Technics SL-1210 MK2','Bandeja de vinilo · tenemos 2'], step:'bandejas'},
+  {id:'denon', type:'gear', src:'controlador_denon_dj.webp', d:[39.5,70,24.5,4], m:[28,81.5,57,4], tag:['Denon DJ SC Live 2','Controladora all-in-one · sin compu'], step:'denon'},
+  {id:'cable', type:'svgGear', src:'cable_xlr_bobina.svg', d:[67,72,12,-6], m:[79,84,20,-6], tag:['Cableado XLR','Todo lo que hace falta para conectar']},
+  {id:'par', type:'svgGear', src:'luz_par_led.svg', d:[7,79,9.5,-8], m:[2,89,17,-8], tag:['Luces PAR LED','Color para la pista']},
+  {id:'barra', type:'svgGear', src:'barra_led.svg', d:[18,85,19,6], m:[58,95,30,4], tag:['Barra LED','Luz de ambiente y escenario']},
+
+  // marcas y garabatos
+  {id:'logo', type:'img', src:'logo_nitido.png', d:[40.5,37,19.5,0], m:[13,56.5,74,0]},
+  {id:'amo', type:'img', src:'logo_amo_nitido.png', d:[89.5,6,7.5,-4], m:[83,21,14,-6]},
+  {id:'corona', type:'svg', src:'corona_roja.svg', d:[7,19.5,7,-12], m:[5,21.5,15,-12], draw:1},
+  {id:'garR', type:'svg', src:'garabato_rojo.svg', d:[79,39,6,8], m:[87,30,11,8], draw:1},
+  {id:'garL', type:'zig', color:'#c4f000', d:[13,64,9,-6], m:[30,49,16,-6], draw:1},
+  {id:'ticks', type:'tick', color:'#c4f000', d:[14.5,10,4.5,0], m:[2,18,9,0], draw:1},
+  {id:'tick2', type:'tick', color:'#ff3d27', d:[78,26,4.5,40], m:null, draw:1},
+  {id:'cinta', type:'svg', src:'cinta_ajedrezada.svg', d:[56,91,17,-4], m:[34,97,32,-3]}
+];
+
+const STEPS = [
+  null,
+  {key:'parlantes', from:'parlR', ghost:'15"', kick:'Alquiler · sonido', title:'dB Technologies B-Hype 15', sub:'Parlante activo de 15 pulgadas. Tenemos dos.',
+    list:['Woofer 15" + tweeter 1"','280 W RMS · clase D','Hasta 126,5 dB SPL','51 Hz – 20 kHz','Entrada XLR / plug, salida XLR'], line:'Clara, liviana y versátil.', short:'Parlantes'},
+  {key:'sub', from:'sub', ghost:'18"', kick:'Alquiler · graves', title:'Lexsen WSB118SUB', sub:'Subwoofer activo de 18 pulgadas con DSP.',
+    list:['1000 W RMS · 2000 W pico','Hasta 130 dB SPL','38 – 150 Hz','Entrada y salida XLR'], line:'Graves con cuerpo y presencia.', short:'Sub'},
+  {key:'consola', from:'ui12', ghost:'Ui12', kick:'Alquiler · mezcla', title:'Soundcraft Ui12', sub:'Consola digital que se maneja por WiFi.',
+    list:['12 entradas','EQ, compresor y gate por canal','3 efectos Lexicon: reverb, delay, chorus','Hasta 10 dispositivos a la vez'], line:'Control total desde cualquier pantalla.', short:'Consola'},
+  {key:'mixer', from:'mix', ghost:'DJM', kick:'Alquiler · cabina', title:'Pioneer DJM', sub:'Mixers de DJ para armar la cabina a tu medida.',
+    list:['DJM-350 · 2 canales','DJM-500 · 4 canales','Consultanos por otras opciones'], line:'Para todo estilo. Plug & play con categoría.', short:'Mixer'},
+  {key:'bandejas', from:'tt2', ghost:'1210', kick:'Alquiler · vinilo', title:'Technics SL-1210 MK2', sub:'Par de bandejas de tracción directa.',
+    list:['Motor de alto torque, arranque rápido','Pitch ajustable','Se alquilan sin púa'], line:'La referencia del vinilo. Precisión y legado.', short:'Bandejas'},
+  {key:'denon', from:'denon', ghost:'SC2', kick:'Alquiler · digital', title:'Denon DJ SC Live 2', sub:'Controladora all-in-one de 2 canales.',
+    list:['Funciona sin compu (Engine DJ OS)','Pantalla táctil','USB, SD y streaming por WiFi','Salidas XLR y RCA'], line:'Enchufás y tocás.', short:'Controladora'},
+  {key:'samma', from:'djL', ghost:'SAMMA', paper:'#ff5a1a', kick:'DJ · socio fundador', title:'Samma', sub:'Federico Massarino. DJ, productor y creativo.',
+    list:['Bookings: Electrónica · Ambient · Funk','Jazz · Hip Hop · Soul'], line:'Nacimos adentro de la cabina.', cta:[['WhatsApp Fede', wa(FE), 1]], short:'Samma'},
+  {key:'jp', from:'djR', ghost:'JPH', paper:'#2457ff', kick:'DJ · socio fundador', title:'Juan Pablo Halty', sub:'DJ, productor y creativo.',
+    list:['Bookings: Electrónica · Ambient · Funk','Jazz · Hip Hop · Soul'], line:'Sabemos de riders, tiempos y tensiones.', cta:[['WhatsApp Juan Pablo', wa(JP), 1]], short:'Juan Pablo'},
+  {key:'fin', final:true, ghost:'', kick:'¿Dónde estamos?', title:'Nos vemos donde se escuche claro.',
+    sub:'En fiestas, ferias, toques, boliches, sets y donde se necesite claridad. Si querés sonido, te lo ofrecemos. Si querés una experiencia pensada, la diseñamos con vos.',
+    cta:[['WhatsApp Juan Pablo · '+JP.show, wa(JP), 1],['WhatsApp Fede · '+FE.show, wa(FE), 1],['Instagram @nitido.sonido','https://www.instagram.com/nitido.sonido/']],
+    frag:'«La claridad no siempre hace ruido. A veces, solo está.»', short:'Contacto'}
+];
+
+/* ---------- utilidades ---------- */
+function rng(seed){let s=seed*9301+49297;return()=>{s=(s*9301+49297)%233280;return s/233280}}
+function tornPath(w,h,seed,amp){
+  const r=rng(seed), pts=[], step=w/18, stepV=h/12;
+  for(let x=0;x<=w;x+=step) pts.push([x, r()*amp]);
+  for(let y=0;y<=h;y+=stepV) pts.push([w-r()*amp, y]);
+  for(let x=w;x>=0;x-=step) pts.push([x, h-r()*amp]);
+  for(let y=h;y>=0;y-=stepV) pts.push([r()*amp, y]);
+  return 'M'+pts.map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join('L')+'Z';
+}
+function tornSVG(color,seed){
+  const w=400,h=300;
+  return `<svg viewBox="-12 -12 ${w+24} ${h+24}" preserveAspectRatio="none" aria-hidden="true">
+    <defs><filter id="f${seed}"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="${seed}"/><feDisplacementMap in="SourceGraphic" scale="7"/></filter>
+    <filter id="g${seed}"><feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="3" seed="${seed+4}" result="n"/><feColorMatrix in="n" type="saturate" values="0" result="m"/><feComposite in="m" in2="SourceGraphic" operator="in" result="c"/><feBlend in="SourceGraphic" in2="c" mode="multiply"/></filter></defs>
+    <path d="${tornPath(w,h,seed+1,22)}" fill="#f4f2ea" filter="url(#f${seed})"/>
+    <path d="${tornPath(w-2,h-2,seed,30)}" transform="translate(4 5)" fill="${color}" filter="url(#g${seed})"/>
+  </svg>`;
+}
+function zigSVG(c){return `<svg viewBox="0 0 300 160" aria-hidden="true"><g fill="none" stroke="${c}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M10 130 70 40 110 120 170 30 210 110 290 20"/></g></svg>`}
+function tickSVG(c){return `<svg viewBox="0 0 200 200" aria-hidden="true"><g fill="none" stroke="${c}" stroke-width="12" stroke-linecap="round"><path d="M40 150 70 40"/><path d="M95 160 112 30"/><path d="M140 165 168 60"/></g></svg>`}
+
+/* ---------- construir escenario ---------- */
+const stage=document.getElementById('stage');
+let introDone=false, drawPhase=false;
+if(G) stage.style.opacity=0;
+const els={};
+const svgCache={};
+async function getSVG(src){ if(!svgCache[src]){ try{ svgCache[src]=await (await fetch(A+src)).text(); }catch(e){ svgCache[src]=null; } } return svgCache[src]; }
+
+ITEMS.forEach((it,i)=>{
+  const el=document.createElement(it.type==='gear'||it.type==='dj'||it.type==='svgGear'?'button':'div');
+  el.className='el';
+  el.style.zIndex=i+1;
+  el.dataset.id=it.id;
+  if(it.type==='torn'){el.classList.add('torn','deco');el.innerHTML=tornSVG(it.color,it.seed)}
+  else if(it.type==='half'){el.classList.add('halftone','deco')}
+  else if(it.type==='zig'){el.classList.add('deco','draw');el.innerHTML=zigSVG(it.color)}
+  else if(it.type==='tick'){el.classList.add('deco','draw');el.innerHTML=tickSVG(it.color)}
+  else if(it.type==='svg'){el.classList.add('deco'); if(it.draw) el.classList.add('draw'); const img=new Image(); img.src=A+it.src; img.alt=''; el.appendChild(img);
+    getSVG(it.src).then(t=>{ if(t){ el.innerHTML=t; const s=el.querySelector('svg'); s.setAttribute('aria-hidden','true'); prepDraw(el); } });}
+  else{
+    const img=new Image(); img.src=A+it.src; img.alt=it.tag?it.tag[0]:(it.id==='logo'?'NÍTIDO sonido & producción':'I love nítido'); img.decoding='async';
+    el.appendChild(img);
+    if(it.type==='svgGear'){el.classList.add('gear')}
+    if(it.type==='gear'){el.classList.add('gear')}
+    if(it.type==='dj'){el.classList.add('gear','dj')}
+    if(it.type==='img'){el.classList.add('deco')}
+  }
+  if(it.tag){ el.type='button'; el.setAttribute('aria-label', it.tag[0]+' — '+it.tag[1]); }
+  stage.appendChild(el); els[it.id]=el; it.el=el;
+});
+if(stage.querySelector('.el[data-id="logo"]')) els.logo.id='logo';
+
+/* servicios */
+const sv=document.createElement('div'); sv.id='services';
+const keys=Object.keys(SERVICES);
+keys.forEach((k,i)=>{
+  const b=document.createElement('button'); b.type='button'; b.dataset.k=k; b.setAttribute('aria-expanded','false');
+  b.innerHTML=[...SERVICES[k].t].map(c=>`<span class="ch">${c===' '?'&nbsp;':c}</span>`).join('');
+  sv.appendChild(b);
+  if(i<keys.length-1){const d=document.createElement('span'); d.className='dot'; d.textContent='·'; d.setAttribute('aria-hidden','true'); sv.appendChild(d);}
+});
+stage.appendChild(sv);
+const note=document.createElement('div'); note.id='note'; note.setAttribute('role','region');
+note.innerHTML=`<div class="paper">${tornSVG('#f1efe6',41)}</div><div class="in"><h3><span></span></h3><p></p></div>`;
+stage.appendChild(note);
+
+function prepDraw(el){
+  el.querySelectorAll('path,ellipse').forEach(p=>{ try{ const L=p.getTotalLength(); p.style.setProperty('--len',L); p.dataset.len=L; }catch(e){} });
+  if(G && !drawPhase){ el.querySelectorAll('path').forEach(p=>{ if(p.dataset.len) gsap.set(p,{strokeDashoffset:p.dataset.len}); }); }
+  else if(G && !introDone){ el.querySelectorAll('path').forEach(p=>{ if(p.dataset.len) gsap.fromTo(p,{strokeDashoffset:p.dataset.len},{strokeDashoffset:0,duration:.8,ease:'power2.inOut'}); }); }
+}
+
+/* ---------- layout ---------- */
+let mobile=false, unit=1;
+function layout(){
+  const vw=innerWidth, vh=innerHeight;
+  mobile = vw/vh < 0.8;
+  const ar = mobile? 9/16 : 16/9;
+  let w=vw, h=vw/ar; if(h>vh){h=vh; w=vh*ar}
+  stage.style.width=w+'px'; stage.style.height=h+'px';
+  unit = w/(mobile?900:1600);
+  document.documentElement.style.setProperty('--u', unit+'px');
+  ITEMS.forEach(it=>{
+    const p = mobile? it.m : it.d; const el=it.el;
+    if(!p){ el.style.display='none'; return; }
+    el.style.display='';
+    el.style.left=p[0]+'%'; el.style.top=p[1]+'%'; el.style.width=p[2]+'%';
+    const rot = (it.type==='torn'||it.type==='half'||it.type==='svg'&&p.length===5)? p[4] : p[3];
+    if(it.type==='torn'||it.type==='half'){ el.style.height=p[3]+'%'; }
+    else if(it.src==='orbita_lima.svg'){ el.style.height=''; }
+    el.style.rotate=(rot||0)+'deg';
+  });
+  // servicios bajo el logo
+  sv.style.top = mobile? '70%' : '49.5%';
+  note.style.top = mobile? '76%' : '54.5%';
+  placeFader();
+}
+addEventListener('resize', ()=>{ layout(); if(step>0) refitClone(); });
+
+/* ---------- etiqueta Dymo ---------- */
+const tag=document.getElementById('tag'), tb=tag.querySelector('b'), ts=tag.querySelector('small'), ti=tag.querySelector('i');
+let tagOn=false;
+function showTag(it,x,y){
+  tb.textContent=it.tag[0]; ts.textContent=it.tag[1]; ti.textContent = it.step? (matchMedia('(hover:hover)').matches?'Clic para verlo de cerca':'Tocá de nuevo para verlo de cerca') : '';
+  ti.style.display = it.step? '' : 'none';
+  moveTag(x,y);
+  if(!tagOn){ tagOn=true; G? gsap.fromTo(tag,{opacity:0,scaleX:.2,rotate:-6},{opacity:1,scaleX:1,rotate:-2,duration:.2,ease:'power2.out'}) : (tag.style.opacity=1, tag.style.transform+=' rotate(-2deg)'); }
+}
+function moveTag(x,y){
+  const r=tag.getBoundingClientRect(); let nx=x+18, ny=y+16;
+  if(nx+r.width>innerWidth-8) nx=x-r.width-12;
+  if(ny+r.height>innerHeight-8) ny=y-r.height-12;
+  tag.style.left=nx+'px'; tag.style.top=ny+'px';
+}
+function hideTag(){ if(!tagOn) return; tagOn=false; G? gsap.to(tag,{opacity:0,duration:.15}) : tag.style.opacity=0; }
+
+let armed=null;
+ITEMS.filter(it=>it.tag).forEach(it=>{
+  const el=it.el;
+  el.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') showTag(it,e.clientX,e.clientY) });
+  el.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse'&&tagOn) moveTag(e.clientX,e.clientY) });
+  el.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse') hideTag() });
+  el.addEventListener('focus',()=>{ const r=el.getBoundingClientRect(); showTag(it,r.left+r.width*.6,r.top+r.height*.4) });
+  el.addEventListener('blur',hideTag);
+  el.addEventListener('click',e=>{
+    const touch = e.pointerType==='touch' || !matchMedia('(hover:hover)').matches;
+    if(touch && armed!==it.id){ // primer toque: muestra la etiqueta
+      document.querySelectorAll('.el.is-hover').forEach(n=>n.classList.remove('is-hover'));
+      el.classList.add('is-hover'); armed=it.id; const r=el.getBoundingClientRect(); showTag(it,r.left+r.width*.3,r.top+r.height*.3); return;
+    }
+    armed=null; el.classList.remove('is-hover');
+    if(it.step){ hideTag(); const n=STEPS.findIndex(s=>s&&s.key===it.step); go(n); }
+  });
+});
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('.el.gear')){ armed=null; document.querySelectorAll('.el.is-hover').forEach(n=>n.classList.remove('is-hover')); hideTag(); } });
+
+/* ---------- servicios desplegables ---------- */
+let openK=null;
+const nh=note.querySelector('h3 span'), np=note.querySelector('p');
+function openService(k){
+  if(openK===k) return;
+  openK=k;
+  sv.querySelectorAll('button').forEach(b=>b.setAttribute('aria-expanded', b.dataset.k===k));
+  if(!k){ G? gsap.to(note,{opacity:0,y:-6,duration:.2}) : note.style.opacity=0; return; }
+  nh.textContent=SERVICES[k].t; np.textContent=SERVICES[k].p;
+  if(G){ gsap.fromTo(note,{opacity:0,y:-10,clipPath:'inset(0 0 100% 0)'},{opacity:1,y:0,clipPath:'inset(0 0 0% 0)',duration:.45,ease:'power3.out'}); }
+  else note.style.opacity=1;
+}
+sv.querySelectorAll('button').forEach(b=>{
+  b.addEventListener('pointerenter',e=>{ if(e.pointerType==='mouse') openService(b.dataset.k) });
+  b.addEventListener('focus',()=>openService(b.dataset.k));
+  b.addEventListener('click',()=>openService(openK===b.dataset.k && !matchMedia('(hover:hover)').matches ? null : b.dataset.k));
+});
+sv.addEventListener('pointerleave',e=>{ if(e.pointerType==='mouse') openService(null) });
+document.addEventListener('pointerdown',e=>{ if(!e.target.closest('#services')) openService(null) });
+
+/* ---------- entrada animada ---------- */
+let introStarted=false;
+function intro(){
+  if(introStarted) return; introStarted=true;
+  if(!G){ introDone=true; return; }
+  gsap.set(stage,{opacity:1});
+  const q=id=>els[id];
+  const tl=gsap.timeline({defaults:{ease:'power3.out'}, onComplete:()=>introDone=true});
+  gsap.set('#bg',{opacity:0});
+  tl.to('#bg',{opacity:1,duration:.5});
+  // papeles: se pegan
+  const papers=ITEMS.filter(i=>i.type==='torn'||i.type==='half').map(i=>i.el);
+  tl.from(papers,{opacity:0,scale:.7,duration:.5,stagger:.04,ease:'power4.out'},.15);
+  // equipos: caen como recortes pegados
+  const gear=ITEMS.filter(i=>i.type==='gear'||i.type==='svgGear').map(i=>i.el);
+  tl.from(gear,{opacity:0,scale:1.35,y:()=>-20*unit,rotate:()=>gsap.utils.random(-14,14),duration:.5,stagger:{each:.05,from:'random'},ease:'power4.out'},.35);
+  tl.from(q('djL'),{opacity:0,x:()=>-90*unit,duration:.7},.55);
+  tl.from(q('djR'),{opacity:0,x:()=>90*unit,duration:.7},.6);
+  // logo se revela
+  tl.fromTo(q('logo'),{clipPath:'inset(0 100% 0 0)'},{clipPath:'inset(0 0% 0 0)',duration:.7,ease:'power3.inOut'},.9);
+  tl.from(q('logo'),{y:()=>8*unit,duration:.7},.9);
+  tl.from(sv.querySelectorAll('.ch'),{opacity:0,y:()=>12*unit,duration:.35,stagger:.018},1.3);
+  tl.from(sv.querySelectorAll('.dot'),{opacity:0,scale:0,duration:.3,stagger:.05},1.4);
+  tl.from(q('amo'),{opacity:0,scale:.4,rotate:-30,duration:.5,ease:'back.out(2)'},1.5);
+  tl.from(q('cinta'),{opacity:0,xPercent:-30,duration:.5},1.1);
+  tl.add(()=>{ // trazos que se dibujan
+    drawPhase=true;
+    stage.querySelectorAll('.draw path').forEach((p,i)=>{ if(p.dataset.len) gsap.fromTo(p,{strokeDashoffset:p.dataset.len},{strokeDashoffset:0,duration:.8,delay:i*.03,ease:'power2.inOut'}); });
+  },1.0);
+  tl.from(['#top','#hint','#fader'],{opacity:0,duration:.5,stagger:.1,clearProps:'opacity'},1.7);
+}
+stage.querySelectorAll('.draw').forEach(prepDraw);
+
+/* ---------- fader de progreso ---------- */
+const fader=document.getElementById('fader'), fTicks=fader.querySelector('.ticks'), fCap=fader.querySelector('.cap'), fLbl=fader.querySelector('.lbl');
+STEPS.forEach((s,i)=>{
+  const t=document.createElement('button'); t.className='tick'; t.type='button';
+  t.style.left=(i/(STEPS.length-1)*100)+'%';
+  t.setAttribute('aria-label', i===0?'Collage':s.short);
+  t.addEventListener('click',()=>go(i)); fTicks.appendChild(t);
+});
+function placeFader(){
+  const pct=(step/(STEPS.length-1)*100)+'%';
+  fCap.style.left=pct; fLbl.style.left=pct; fLbl.textContent= step===0?'Collage':STEPS[step].short;
+}
+
+/* ---------- modo foco (el "scroll") ---------- */
+const focus=document.getElementById('focus'), shade=focus.querySelector('.shade'), info=document.getElementById('info'), ghost=document.getElementById('ghost');
+let step=0, busy=false, cur=null; // cur = {img, paper, it}
+
+function targetBox(){
+  const vw=innerWidth, vh=innerHeight;
+  return mobile? {x:vw*.08,y:vh*.09,w:vw*.84,h:vh*.40} : {x:vw*.05,y:vh*.12,w:vw*.47,h:vh*.76};
+}
+function fitRect(img, srcEl){
+  const b=targetBox();
+  const nw=img.naturalWidth||srcEl.offsetWidth, nh=img.naturalHeight||srcEl.offsetHeight;
+  const ar=nw/nh; let w=b.w, h=w/ar; if(h>b.h){h=b.h; w=h*ar}
+  const cap=Math.max(2.2*nw/w,0) ; if(cap<1){w*=cap;h*=cap}
+  return {left:b.x+(b.w-w)/2, top:b.y+(b.h-h)/2, width:w, height:h};
+}
+function srcRect(el){
+  const r=el.getBoundingClientRect(); const w=el.offsetWidth, h=el.offsetHeight;
+  return {left:r.left+r.width/2-w/2, top:r.top+r.height/2-h/2, width:w, height:h, rotate:parseFloat(el.style.rotate)||0};
+}
+function makeClone(s){
+  const it=ITEMS.find(i=>i.id===s.from); const srcImg=it.el.querySelector('img');
+  const img=new Image(); img.src=srcImg.src; img.alt=''; img.className='clone'+(it.type==='dj'?' dj':'');
+  document.body.appendChild(img);
+  let paper=null;
+  if(s.paper){ paper=document.createElement('div'); paper.className='fpaper'; paper.innerHTML=tornSVG(s.paper, it.id==='djL'?51:53); document.body.appendChild(paper); }
+  return {img,paper,it};
+}
+function paperRect(r){ return {left:r.left-r.width*.06, top:r.top+r.height*.12, width:r.width*1.1, height:r.height*.8}; }
+function refitClone(){ if(!cur||!cur.img||!G) return; const r=fitRect(cur.img,cur.it.el); gsap.set(cur.img,{...r,rotate:0,scale:1}); if(cur.paper) gsap.set(cur.paper,{...paperRect(r),rotate:-3}); }
+
+function splitChars(t){ return t.split(' ').map(w=>`<span style="display:inline-block;white-space:nowrap">${[...w].map(c=>`<span class="ch">${c}</span>`).join('')}</span>`).join(' '); }
+function fillInfo(s){
+  info.className = s.final? 'final':'';
+  let h=`<div class="kick">${s.kick}</div><h2>${splitChars(s.title)}</h2><p class="sub">${s.sub}</p>`;
+  if(s.list) h+=`<ul>${s.list.map(l=>`<li>${l}</li>`).join('')}</ul>`;
+  if(s.line) h+=`<p class="line">${s.line}</p>`;
+  if(s.cta) h+=`<div class="cta">${s.cta.map(c=>`<a href="${c[1]}" target="_blank" rel="noopener" class="${c[2]?'solid':''}">${c[0]}</a>`).join('')}</div>`;
+  if(s.frag) h+=`<p class="frag">${s.frag}</p>`;
+  info.innerHTML=h; ghost.textContent=s.ghost||'';
+}
+function infoIn(){
+  if(!G) return;
+  const ch=info.querySelectorAll('h2 .ch'); const each=Math.min(.025,.5/Math.max(ch.length,1));
+  gsap.fromTo(info.querySelector('.kick'),{opacity:0,y:12},{opacity:1,y:0,duration:.4,ease:'power3.out'});
+  gsap.fromTo(ch,{opacity:0,y:18},{opacity:1,y:0,duration:.45,stagger:each,ease:'power3.out',delay:.05});
+  gsap.fromTo(info.querySelectorAll('.sub,ul,.line,.cta,.frag'),{opacity:0,y:16},{opacity:1,y:0,duration:.5,stagger:.07,ease:'power3.out',delay:.2});
+  gsap.fromTo(ghost,{opacity:0,x:40},{opacity:1,x:0,duration:.9,ease:'power3.out'});
+}
+function infoOut(){ return G? gsap.to([info,ghost],{opacity:0,duration:.22,ease:'power2.in'}) : null; }
+
+function go(n){
+  n=Math.max(0,Math.min(STEPS.length-1,n));
+  if(busy||n===step) return;
+  busy=true; hideTag(); openService(null);
+  const dir = n>step? 1 : -1;
+  const prev=cur, prevStep=step; step=n; placeFader();
+  const D = G? 1 : 0;
+  // salida del actual
+  if(prev){
+    if(dir>0 || n===0 && false){
+      vanish(prev);
+    } else {
+      flyBack(prev);
+    }
+  }
+  if(G) infoOut();
+  if(n===0){
+    document.body.classList.remove('focusing');
+    G? gsap.to(shade,{opacity:0,duration:.6}) : null;
+    cur=null;
+    setTimeout(()=>{busy=false; info.innerHTML=''},G?750:0);
+    return;
+  }
+  document.body.classList.add('focusing');
+  if(G) gsap.to(shade,{opacity:1,duration:.5}); else shade.style.opacity=1;
+  const s=STEPS[n];
+  setTimeout(()=>{ fillInfo(s); if(G){ gsap.killTweensOf([info,ghost]); gsap.set([info,ghost],{opacity:1}); } infoIn(); }, G?260:0);
+  if(s.final){ cur=null; setTimeout(()=>busy=false, G?800:0); return; }
+  const c=makeClone(s); cur=c;
+  const go2=()=>{
+    const r=fitRect(c.img,c.it.el);
+    if(dir>0 || prevStep===0){ // vuela desde su lugar en el collage
+      const sr=srcRect(c.it.el); c.it.el.style.visibility='hidden';
+      if(G){
+        gsap.set(c.img,{left:sr.left,top:sr.top,width:sr.width,height:sr.height,rotate:sr.rotate,opacity:1});
+        gsap.to(c.img,{...r,rotate:0,duration:.85,ease:'power3.inOut'});
+        if(c.paper){ gsap.set(c.paper,{...paperRect(r),rotate:-3}); gsap.fromTo(c.paper,{opacity:0,scale:.6},{opacity:1,scale:1,duration:.6,delay:.35,ease:'power4.out'}); }
+      } else { Object.assign(c.img.style,px(r)); if(c.paper) Object.assign(c.paper.style,px(paperRect(r))); }
+    } else { // volviendo: reaparece desde grande
+      c.it.el.style.visibility='hidden';
+      if(G){
+        gsap.set(c.img,{...r,rotate:0});
+        gsap.fromTo(c.img,{opacity:0,scale:1.4,filter:'blur(8px)'},{opacity:1,scale:1,filter:'blur(0px)',duration:.8,ease:'power3.out',clearProps:'filter'});
+        if(c.paper){ gsap.set(c.paper,{...paperRect(r),rotate:-3}); gsap.fromTo(c.paper,{opacity:0},{opacity:1,duration:.5,delay:.2}); }
+      } else { Object.assign(c.img.style,px(r)); if(c.paper) Object.assign(c.paper.style,px(paperRect(r))); }
+    }
+    setTimeout(()=>busy=false, G?900:0);
+  };
+  if(c.img.complete) go2(); else c.img.onload=go2;
+}
+function px(r){ return {left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'}; }
+function vanish(c){ // crece y se desvanece
+  const done=()=>{ c.img.remove(); c.paper&&c.paper.remove(); c.it.el.style.visibility=''; };
+  if(!G){ done(); return; }
+  gsap.to(c.img,{scale:1.45,opacity:0,filter:'blur(10px)',duration:.7,ease:'power2.in',onComplete:done});
+  if(c.paper) gsap.to(c.paper,{scale:1.3,opacity:0,duration:.5,ease:'power2.in'});
+}
+function flyBack(c){ // vuelve a su lugar en el collage
+  const done=()=>{ c.img.remove(); c.paper&&c.paper.remove(); c.it.el.style.visibility=''; };
+  if(!G){ done(); return; }
+  const sr=srcRect(c.it.el);
+  if(c.paper) gsap.to(c.paper,{opacity:0,scale:.7,duration:.35});
+  gsap.to(c.img,{left:sr.left,top:sr.top,width:sr.width,height:sr.height,rotate:sr.rotate,duration:.75,ease:'power3.inOut',onComplete:done});
+}
+
+/* entradas: rueda, touch, teclado */
+let lastWheel=0, acc=0, lockUntil=0;
+addEventListener('wheel',e=>{
+  e.preventDefault();
+  const now=performance.now();
+  if(now-lastWheel>220) acc=0;
+  lastWheel=now; acc+=e.deltaY;
+  if(busy || now<lockUntil){ acc=0; lockUntil=Math.max(lockUntil, now+160); return; }
+  if(Math.abs(acc)>40){ go(step+(acc>0?1:-1)); acc=0; lockUntil=now+950; }
+},{passive:false});
+let ty=null;
+addEventListener('touchstart',e=>{ ty=e.touches[0].clientY; },{passive:true});
+addEventListener('touchmove',e=>{ if(e.cancelable) e.preventDefault(); },{passive:false});
+addEventListener('touchend',e=>{ if(ty===null) return; const dy=ty-e.changedTouches[0].clientY; ty=null; if(Math.abs(dy)>45) go(step+(dy>0?1:-1)); },{passive:true});
+addEventListener('keydown',e=>{
+  if(['ArrowDown','PageDown',' '].includes(e.key)){ e.preventDefault(); go(step+1); }
+  else if(['ArrowUp','PageUp'].includes(e.key)){ e.preventDefault(); go(step-1); }
+  else if(e.key==='Escape'){ go(0); }
+  else if(e.key==='End'){ go(STEPS.length-1); } else if(e.key==='Home'){ go(0); }
+});
+document.getElementById('close').addEventListener('click',()=>go(0));
+document.querySelector('[data-goto="last"]').addEventListener('click',()=>go(STEPS.length-1));
+shade.addEventListener('click',()=>go(0));
+
+/* arranque */
+layout();
+const imgs=[...stage.querySelectorAll('img')];
+Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{i.onload=i.onerror=r}))).then(()=>{ (document.fonts?document.fonts.ready:Promise.resolve()).then(intro); });
+setTimeout(intro,3000);
+if(!matchMedia('(hover:hover)').matches) document.getElementById('hint').innerHTML='<span class="arr">↑</span> Deslizá para ver los equipos de cerca';
+})();
+</script>
+</body>
+</html>
